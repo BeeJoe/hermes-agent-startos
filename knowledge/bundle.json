@@ -1,0 +1,16 @@
+{
+  "version": "baseline",
+  "built_at": null,
+  "indexes": {
+    "start-os": "",
+    "start-tunnel": "",
+    "packages": ""
+  },
+  "pages": {
+    "startOs": {},
+    "startTunnel": {},
+    "upstream": {}
+  },
+  "packages": {},
+  "knownIssues": []
+}
