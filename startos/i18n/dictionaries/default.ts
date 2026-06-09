@@ -7,8 +7,8 @@ const dict = {
   'Authenticate start-cli so Hermes can administer this StartOS server': 3,
   'Base URL': 4,
   'Choose and configure an LLM backend so Hermes can run': 5,
-  'Choose and configure the LLM backend Hermes uses (local Ollama/vLLM, or a cloud provider)': 6,
-  'Choose the model backend. Ollama and vLLM run locally on your server (added as a dependency); the rest are cloud providers requiring an API key.': 7,
+  'Choose and configure the LLM backend Hermes uses (local Ollama/vLLM/llama.cpp, or a cloud provider)': 6,
+  'Choose the model backend. Ollama, vLLM and llama.cpp run locally on your server (added as a dependency); the rest are cloud providers requiring an API key.': 7,
   'Configure Provider': 8,
   'Enter master password': 9,
   'Google Gemini': 10,
@@ -17,7 +17,7 @@ const dict = {
   'Login Successful': 13,
   'Login to StartOS': 14,
   'Messaging Gateway': 15,
-  'Model': 16,
+  Model: 16,
   'No LLM provider configured — run the Configure Provider action': 17,
   'No host configured. The host URL is set automatically from the OS IP address.': 18,
   'Ollama (local)': 19,
@@ -40,6 +40,7 @@ const dict = {
   'start-cli is now authenticated with your StartOS server.': 36,
   'vLLM (local)': 37,
   'xAI Grok': 38,
+  'llama.cpp (local)': 39,
 } as const
 
 /**

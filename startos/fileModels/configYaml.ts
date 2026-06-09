@@ -10,10 +10,22 @@ import { sdk } from '../sdk'
  * `looseObject` so keys we don't model survive a merge() instead of being
  * stripped by the schema parse, preserving 2-way binding with the dashboard.
  *
- * TODO(build): pin the provider/model routing shape against the upstream
- * config schema once confirmed (see hermes-agent.nousresearch.com/docs/.../configuration).
+ * The `model` block is Hermes' provider routing (see cli-config.yaml.example
+ * upstream). `provider` selects the backend ('custom' for any OpenAI-compatible
+ * endpoint; 'ollama'/'vllm' are aliases for 'custom'; 'gemini' is named);
+ * `base_url`/`api_key` are read from here for custom + the local aliases (the
+ * .env OPENAI_BASE_URL path is no longer consulted upstream). Configure Provider
+ * owns these four keys; the user's other model.* keys (context_length, …) survive.
  */
 const shape = z.looseObject({
+  model: z
+    .looseObject({
+      default: z.string().optional(),
+      provider: z.string().optional(),
+      base_url: z.string().optional(),
+      api_key: z.string().optional(),
+    })
+    .optional(),
   skills: z
     .looseObject({
       external_dirs: z.array(z.string()).catch([]),

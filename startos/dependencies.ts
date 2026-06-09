@@ -24,5 +24,17 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
     }
   }
 
+  if (backend === 'llama-cpp') {
+    return {
+      'llama-cpp': {
+        kind: 'running',
+        // Keyless release (the separate API key was dropped); Hermes connects
+        // to the internal endpoint without auth.
+        versionRange: '>=1.0.9544:0',
+        healthChecks: ['primary'],
+      },
+    }
+  }
+
   return {}
 })

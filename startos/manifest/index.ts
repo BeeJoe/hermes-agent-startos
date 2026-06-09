@@ -53,5 +53,16 @@ export const manifest = setupManifest({
         title: 'vLLM',
       },
     },
+    'llama-cpp': {
+      optional: true,
+      description: {
+        en_US:
+          'Optional: run local GGUF models with llama.cpp. Select it as your backend in the Configure Provider action.',
+      },
+      metadata: {
+        icon: 'https://raw.githubusercontent.com/Start9Labs/llama-cpp-startos/master/icon.png',
+        title: 'llama.cpp',
+      },
+    },
   },
 })

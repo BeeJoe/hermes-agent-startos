@@ -1,8 +1,7 @@
 import { sdk } from './sdk'
 
 // Hermes dashboard (web UI + in-browser chat). Bound as the StartOS `ui` interface.
-// TODO(build): confirm the dashboard's default/flagged listen port (Umbrel proxied
-// the upstream dashboard at 127.0.0.1:9119).
+// 9119 is the upstream default (HERMES_DASHBOARD_PORT).
 export const dashboardPort = 9119
 
 // Hermes gateway API server (messaging integrations). Internal only.
@@ -26,7 +25,6 @@ export const STARTOS_VERSION = '0.4.0-beta.9'
 
 // support-server's published knowledge bundle (full doc text + known issues +
 // registry package info). Periodically re-fetched in the background.
-// TODO(build): confirm the canonical bundle URL.
 export const BUNDLE_URL = 'https://start9.me/_api/knowledge/bundle'
 
 export function mainMounts() {

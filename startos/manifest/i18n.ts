@@ -4,7 +4,7 @@ export const short = {
 
 export const long = {
   en_US:
-    'Hermes Agent is an open-source autonomous AI agent from Nous Research. It chats, runs tools, browses the web, edits files, and connects to messaging platforms (Telegram, Discord, Signal, Slack, Matrix, and more). It improves the longer it runs — building reusable skills, storing preferences, and carrying memory across sessions. On StartOS it runs the official upstream image with a web dashboard (chat + management), an optional local LLM backend (Ollama or vLLM), and StartOS-aware skills for server administration and support.',
+    'Hermes Agent is an open-source autonomous AI agent from Nous Research. It chats, runs tools, browses the web, edits files, and connects to messaging platforms (Telegram, Discord, Signal, Slack, Matrix, and more). It improves the longer it runs — building reusable skills, storing preferences, and carrying memory across sessions. On StartOS it runs the official upstream image with a web dashboard (chat + management), an optional local LLM backend (Ollama, vLLM, or llama.cpp), and StartOS-aware skills for server administration and support.',
 }
 
 export const installAlert = {

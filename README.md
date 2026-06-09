@@ -47,7 +47,7 @@ All containers share one subcontainer of the `main` volume. The runtime is compo
 | --------- | ---- | ------- | ------- |
 | `install-root-ca` | oneshot | (installs the StartOS root CA into the image trust store) | Lets `start-cli` and the agent reach the local box over HTTPS |
 | `chown` | oneshot | `chown -R 1000:1000 /opt/data` | Hand the data dir to the `hermes` user (uid/gid 1000) |
-| `dashboard` | daemon | `hermes dashboard --host 0.0.0.0 --port 9119 --no-open` | Web UI: chat, config, sessions/memory, skills, logs, analytics, cron |
+| `dashboard` | daemon | `hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure` | Web UI: chat, config, sessions/memory, skills, logs, analytics, cron |
 | `gateway` | daemon | `hermes gateway run` (`API_SERVER_*` env enables the internal API on `:8642`) | Messaging-platform integrations |
 | `bundle-refresh` | daemon | ETag'd `curl` loop (24h) against the support knowledge bundle | Keeps the `startos-support` knowledge current |
 
@@ -73,7 +73,7 @@ All containers share one subcontainer of the `main` volume. The runtime is compo
 
 1. Install raises a **root-equivalent capability** alert (see Limitations) — Hermes runs an LLM that can execute commands on your behalf.
 2. On first start, the **Configure Provider** action is a critical task: Hermes cannot run until an LLM backend resolves.
-3. Pick a backend in **Configure Provider** (a cloud OpenAI-compatible / Gemini / Grok provider, or local **Ollama** / **vLLM**). Selecting Ollama or vLLM adds it as a running dependency and wires the backend URL automatically.
+3. Pick a backend in **Configure Provider** (a cloud OpenAI-compatible / Gemini / Grok provider, or local **Ollama** / **vLLM** / **llama.cpp**). Selecting a local backend adds it as a running dependency and wires the backend URL (and key, where published) automatically.
 4. The **LLM Provider** health check turns green once a provider resolves; open the **Web Dashboard** to chat.
 5. *(Optional)* Run **Login to StartOS** to authenticate the bundled `start-cli` so the agent can administer this server.
 
@@ -83,10 +83,12 @@ All containers share one subcontainer of the `main` volume. The runtime is compo
 
 Hermes is configured through its own files on the data volume, modeled as StartOS file models (`startos/fileModels/`) for two-way binding with the dashboard's own editor:
 
-- `config.yaml` — provider routing, `skills.external_dirs`, messaging channels.
-- `.env` — provider credentials (e.g. `OPENAI_API_KEY`).
+- `config.yaml` — the `model` routing block (`provider`, `base_url`, `api_key`, `default`), `skills.external_dirs`, messaging channels.
+- `.env` — provider credentials read by name (e.g. `GEMINI_API_KEY`).
 
-These files are **authoritative and two-way bound**: both the StartOS actions and the dashboard write them, so changes **merge** rather than clobber — config is not re-pushed via env-var overrides on every restart. The **Configure Provider** action writes the chosen LLM backend (and records it so `setupDependencies` can flip the Ollama/vLLM dependency); everything else is managed in the dashboard.
+These files are **authoritative and two-way bound**: both the StartOS actions and the dashboard write them, so changes **merge** rather than clobber — config is not re-pushed via env-var overrides on every restart. The **Configure Provider** action writes the `model` routing block (and records the selection so `setupDependencies` can flip the local-backend dependency); everything else is managed in the dashboard.
+
+**Where credentials land:** Hermes host-gates `.env` API keys (an OpenAI key is only sent to OpenAI), so where a backend needs a key the action writes it into `config.yaml`'s `model.api_key` (the path Hermes honours for config-supplied base URLs) rather than `.env` — that covers `custom` cloud endpoints (OpenAI-compatible, Grok) and vLLM, whose key is read automatically from its `public` credentials volume. Ollama and llama.cpp run keyless (llama.cpp's basic auth is enforced only at the OS reverse-proxy edge, so internal `.startos` connections need none). Gemini is a named provider and takes its key from `.env` (`GEMINI_API_KEY`). The action always sets `model.provider` explicitly (never `auto`), so stale keys can't mis-route.
 
 `skills.external_dirs` in `config.yaml` points at the image-owned `/opt/startos/skills`, so the managed `start-cli` and `startos-support` skills load without the agent being able to edit them.
 
@@ -99,6 +101,8 @@ These files are **authoritative and two-way bound**: both the StartOS actions an
 | Web Dashboard | `ui` | 9119 | HTTP | ui | In-browser chat + full management UI |
 
 The `gateway` API (`:8642`) is **internal only** — it is not exported as a StartOS interface; messaging platforms reach the agent through their own webhooks/long-poll, configured in the dashboard.
+
+**Authentication:** the dashboard runs with `--insecure` because StartOS already authenticates the `ui` interface. Without it the dashboard's own OAuth gate fails closed on the non-loopback (`0.0.0.0`) bind. The dashboard injects its session token into the served SPA, so the StartOS-proxied browser authenticates to the API automatically — no extra login.
 
 **Access methods:**
 
@@ -113,19 +117,20 @@ The `gateway` API (`:8642`) is **internal only** — it is not exported as a Sta
 
 | Action | Purpose |
 | ------ | ------- |
-| **Configure Provider** | Select the LLM backend (OpenAI-compatible, Gemini, Grok, or local Ollama/vLLM) and write it into `config.yaml`/`.env`. Toggles the Ollama/vLLM dependency. |
+| **Configure Provider** | Select the LLM backend (OpenAI-compatible, Gemini, Grok, or local Ollama/vLLM/llama.cpp) and write it into `config.yaml`/`.env`. Toggles the local-backend dependency. |
 | **Login to StartOS** | Install the StartOS root CA and authenticate the bundled `start-cli` against this server (asks for the master password). **Grants the agent root-equivalent control** — gated behind a warning. |
 
 ---
 
 ## Dependencies
 
-Both are declared `optional` in the manifest and flipped to **running** dependencies by `setupDependencies` based on the Configure Provider selection (`startos/dependencies.ts`). Cloud providers need no dependency.
+All are declared `optional` in the manifest and flipped to **running** dependencies by `setupDependencies` based on the Configure Provider selection (`startos/dependencies.ts`). Cloud providers need no dependency.
 
 | Dependency | Version range | When required |
 | ---------- | ------------- | ------------- |
 | `ollama` | `>=0.21.0:0` | Backend set to Ollama |
 | `vllm` | `>=0.16.0:0.1` | Backend set to vLLM |
+| `llama-cpp` | `>=1.0.9544:0` | Backend set to llama.cpp (the keyless release) |
 
 ---
 
@@ -153,11 +158,11 @@ Both are declared `optional` in the manifest and flipped to **running** dependen
 ## Limitations and Differences
 
 1. **Root-equivalent capability.** After **Login to StartOS**, the agent's `start-cli` skill can run any server command (uninstall services, change config, etc.) with no built-in confirmation step. The install alert and task warning gate this — keep them intact. Do not install on a server holding important data or keys (e.g. LND/CLN).
-2. **Cloud-provider privacy.** With a cloud backend, every prompt and its context leave the device. Use Ollama or vLLM to keep inference on-device.
+2. **Cloud-provider privacy.** With a cloud backend, every prompt and its context leave the device. Use Ollama, vLLM, or llama.cpp to keep inference on-device.
 3. **No web-terminal wrapper.** The Hermes dashboard's Chat tab is already the full TUI in the browser, so this package does not add the Node web-terminal / Host-rewrite proxy that the Umbrel build needs — the upstream binaries are exposed directly.
 4. **MCP is a future upgrade.** Live StartOS tools over the Model Context Protocol are not wired yet; server administration is via the `start-cli` skill and support is via the `startos-support` docs-search skill over the bundle.
 5. **Support-docs scope.** The bundled knowledge covers StartOS, StartTunnel, and registry packages — not the s9pk Packaging book or Bitcoin Guides.
-6. **Open build-time confirmations.** A few image assumptions are still pending verification against the upstream image — see [TODO.md](./TODO.md).
+6. **Dashboard auth is delegated to StartOS.** The dashboard runs with `--insecure` — its built-in OAuth gate is off, and StartOS's authenticated `ui` interface is the sole access control (the container port is never exposed directly).
 
 ---
 
@@ -192,9 +197,14 @@ internal_ports:
 image_owned_context:
   skills: /opt/startos/skills
   baseline_bundle: /opt/startos/knowledge/bundle.json
+provider_config: # written by Configure Provider into config.yaml `model`
+  keys: model.provider, model.base_url, model.api_key, model.default
+  gemini_key_env: GEMINI_API_KEY # named providers keyed via .env
+  vllm_key: read from vllm:public/credentials.json # ollama + llama.cpp are keyless
 dependencies: # optional; flipped to running by Configure Provider
   ollama: ">=0.21.0:0"
   vllm: ">=0.16.0:0.1"
+  llama-cpp: ">=1.0.9544:0"
 actions:
   - Configure Provider
   - Login to StartOS # grants root-equivalent control
