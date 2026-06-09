@@ -19,11 +19,10 @@ export const baselineBundlePath = '/opt/startos/knowledge/bundle.json'
 export const bundlePath = `${dataDir}/.startos/knowledge/bundle.json`
 
 // Upstream Hermes version this package wraps (mirror of the pinned image tag).
-export const HERMES_VERSION = '2026.5.16'
+export const HERMES_VERSION = '2026.6.5'
 
-// StartOS version whose start-cli binary the image installs.
-// TODO(build): keep in step with the target StartOS release.
-export const STARTOS_VERSION = '0.4.0-alpha.20'
+// StartOS release whose start-cli binary the image installs (see UPDATING.md).
+export const STARTOS_VERSION = '0.4.0-beta.9'
 
 // support-server's published knowledge bundle (full doc text + known issues +
 // registry package info). Periodically re-fetched in the background.
