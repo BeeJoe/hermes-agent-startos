@@ -7,7 +7,6 @@ import {
   bundlePath,
   dashboardPort,
   dataDir,
-  gatewayApiPort,
   mainMounts,
 } from './utils'
 
@@ -18,6 +17,18 @@ const PROVIDER_PROBE = `from dotenv import load_dotenv
 from hermes_cli.runtime_provider import resolve_runtime_provider
 load_dotenv("${dataDir}/.env")
 resolve_runtime_provider()
+`
+
+// Probe the gateway daemon's own liveness via upstream's pid-file logic
+// (gateway.status.get_running_pid) — the same signal the dashboard uses. Exit 0
+// iff the gateway process is running, independent of which messaging platforms
+// (if any) the user has configured. The OpenAI-compatible API server is one
+// such opt-in platform, enabled from the dashboard — not something this package
+// forces on, so the gateway has no guaranteed listening port to probe.
+const GATEWAY_PROBE = `import os, sys
+os.environ.setdefault("HERMES_HOME", "${dataDir}")
+from gateway.status import get_running_pid
+sys.exit(0 if get_running_pid() else 1)
 `
 
 export const main = sdk.setupMain(async ({ effects }) => {
@@ -78,6 +89,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
             '--insecure',
           ],
           env,
+          user: 'hermes',
         },
         ready: {
           display: i18n('Web Dashboard'),
@@ -98,21 +110,21 @@ export const main = sdk.setupMain(async ({ effects }) => {
         subcontainer: sub,
         exec: {
           command: ['hermes', 'gateway', 'run'],
-          env: {
-            ...env,
-            API_SERVER_ENABLED: 'true',
-            API_SERVER_HOST: '0.0.0.0',
-            API_SERVER_PORT: gatewayApiPort.toString(),
-          },
+          env,
+          user: 'hermes',
         },
         ready: {
           display: i18n('Messaging Gateway'),
           gracePeriod: 60_000,
           fn: () =>
-            sdk.healthCheck.checkPortListening(effects, gatewayApiPort, {
-              successMessage: i18n('The messaging gateway is running'),
-              errorMessage: i18n('The messaging gateway is not running'),
-            }),
+            sdk.healthCheck.runHealthScript(
+              ['/opt/hermes/.venv/bin/python3', '-c', GATEWAY_PROBE],
+              sub,
+              {
+                errorMessage: i18n('The messaging gateway is not running'),
+                message: () => i18n('The messaging gateway is running'),
+              },
+            ),
         },
         requires: ['install-root-ca', 'chown'],
       })
@@ -149,6 +161,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
               `sleep 86400; done`,
           ],
           env,
+          user: 'hermes',
         },
         ready: {
           display: i18n('Knowledge Bundle'),

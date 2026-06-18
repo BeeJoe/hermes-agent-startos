@@ -48,7 +48,7 @@ All containers share one subcontainer of the `main` volume. The runtime is compo
 | `install-root-ca` | oneshot | (installs the StartOS root CA into the image trust store) | Lets `start-cli` and the agent reach the local box over HTTPS |
 | `chown` | oneshot | `chown -R 1000:1000 /opt/data` | Hand the data dir to the `hermes` user (uid/gid 1000) |
 | `dashboard` | daemon | `hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure` | Web UI: chat, config, sessions/memory, skills, logs, analytics, cron |
-| `gateway` | daemon | `hermes gateway run` (`API_SERVER_*` env enables the internal API on `:8642`) | Messaging-platform integrations |
+| `gateway` | daemon | `hermes gateway run` | Messaging-platform integrations (Telegram, Discord, Signal, …), configured in the dashboard |
 | `bundle-refresh` | daemon | ETag'd `curl` loop (24h) against the support knowledge bundle | Keeps the `startos-support` knowledge current |
 
 `dashboard` and `gateway` require both oneshots before they start.
@@ -100,7 +100,7 @@ These files are **authoritative and two-way bound**: both the StartOS actions an
 | --------- | -- | ---- | -------- | ---- | ------- |
 | Web Dashboard | `ui` | 9119 | HTTP | ui | In-browser chat + full management UI |
 
-The `gateway` API (`:8642`) is **internal only** — it is not exported as a StartOS interface; messaging platforms reach the agent through their own webhooks/long-poll, configured in the dashboard.
+Messaging platforms reach the agent through their own webhooks/long-poll, configured in the dashboard. Hermes' **OpenAI-compatible API server** (an HTTP endpoint that lets external frontends like Open WebUI use Hermes as a model) is one such gateway platform — it is **off by default** and user-enabled from the dashboard's messaging/channels config, where Hermes requires an `API_SERVER_KEY` before it will start (it can dispatch terminal-capable agent work). This package does **not** force it on or export it as a StartOS interface; enabling and exposing it is left to the user.
 
 **Authentication:** the dashboard runs with `--insecure` because StartOS already authenticates the `ui` interface. Without it the dashboard's own OAuth gate fails closed on the non-loopback (`0.0.0.0`) bind. The dashboard injects its session token into the served SPA, so the StartOS-proxied browser authenticates to the API automatically — no extra login.
 
@@ -149,7 +149,7 @@ All are declared `optional` in the manifest and flipped to **running** dependenc
 | Check | Method | Messages |
 | ----- | ------ | -------- |
 | Web Dashboard | `checkWebUrl` on `:9119` | Success: "The dashboard is ready" / Error: "The dashboard is not ready" |
-| Messaging Gateway | `checkPortListening` on `:8642` | Success: "The messaging gateway is running" / Error: "The messaging gateway is not running" |
+| Messaging Gateway | gateway-process liveness via upstream `gateway.status.get_running_pid` (the signal the dashboard itself uses) | Success: "The messaging gateway is running" / Error: "The messaging gateway is not running" |
 | LLM Provider | Runs Hermes' `resolve_runtime_provider()` in the venv | Success: "An LLM provider is configured" / Error: "No LLM provider configured — run the Configure Provider action" |
 | Knowledge Bundle | `test -f` on the live bundle | Success: "The support knowledge bundle is present" / Error: "The support knowledge bundle is not present" |
 
@@ -192,8 +192,8 @@ volumes:
   main: /opt/data
 interfaces:
   ui: 9119 # Web Dashboard (chat + management)
-internal_ports:
-  gateway_api: 8642 # not exported as an interface
+optional_gateway_platforms:
+  api_server: # OpenAI-compatible HTTP API (default port 8642); off by default, user-enabled in dashboard (requires API_SERVER_KEY); not exported as a StartOS interface
 image_owned_context:
   skills: /opt/startos/skills
   baseline_bundle: /opt/startos/knowledge/bundle.json

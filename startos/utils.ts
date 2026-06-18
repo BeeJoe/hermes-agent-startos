@@ -4,9 +4,6 @@ import { sdk } from './sdk'
 // 9119 is the upstream default (HERMES_DASHBOARD_PORT).
 export const dashboardPort = 9119
 
-// Hermes gateway API server (messaging integrations). Internal only.
-export const gatewayApiPort = 8642
-
 // Hermes data dir on the volume — matches the upstream image (HOME=/opt/data, uid 1000).
 export const dataDir = '/opt/data'
 
