@@ -8,7 +8,9 @@ import { sdk } from '../sdk'
  * file.
  */
 const shape = z.looseObject({
-  backend: z.enum(['cloud', 'ollama', 'vllm']).catch('cloud'),
+  backend: z.enum(['cloud', 'ollama', 'vllm', 'llama-cpp']).catch('cloud'),
+  // Last Configure Provider selection id, so the action can pre-fill its form.
+  provider: z.string().optional(),
 })
 
 export const storeJson = FileHelper.json(
