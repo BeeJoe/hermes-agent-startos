@@ -64,6 +64,13 @@ const providerVariants = Variants.of({
     name: i18n('xAI Grok'),
     spec: InputSpec.of({ apiKey: apiKeyField('xai-...'), model: modelField }),
   },
+  anthropic: {
+    name: i18n('Anthropic Claude'),
+    spec: InputSpec.of({
+      apiKey: apiKeyField('sk-ant-...'),
+      model: modelField,
+    }),
+  },
   ollama: {
     name: i18n('Ollama (local)'),
     spec: InputSpec.of({ model: modelField }),
@@ -143,6 +150,13 @@ export const configureProvider = sdk.Action.withInput(
         return {
           provider: { selection: 'gemini' as const, value: { model: modelId } },
         }
+      case 'anthropic':
+        return {
+          provider: {
+            selection: 'anthropic' as const,
+            value: { model: modelId },
+          },
+        }
       case 'ollama':
         return {
           provider: { selection: 'ollama' as const, value: { model: modelId } },
@@ -171,8 +185,8 @@ export const configureProvider = sdk.Action.withInput(
     // providers never leaves a mismatched key behind. Hermes reads provider,
     // base_url and api_key from config.yaml — the .env OPENAI_BASE_URL path is no
     // longer consulted, and the config api_key is honoured for `custom` and the
-    // `ollama`/`vllm` aliases. Gemini is a named provider, keyed from .env.
-    // OpenAI Codex OAuth is a named provider keyed from auth.json.
+    // `ollama`/`vllm` aliases. Gemini and Anthropic are named providers, keyed
+    // from .env. OpenAI Codex OAuth is a named provider keyed from auth.json.
     let model: {
       provider: string
       base_url: string | undefined
@@ -251,6 +265,15 @@ export const configureProvider = sdk.Action.withInput(
         default: p.value.model,
       }
       envPatch.GEMINI_API_KEY = p.value.apiKey
+    } else if (p.selection === 'anthropic') {
+      backend = 'cloud'
+      model = {
+        provider: 'anthropic',
+        base_url: undefined,
+        api_key: undefined,
+        default: p.value.model,
+      }
+      envPatch.ANTHROPIC_API_KEY = p.value.apiKey
     } else {
       throw new Error('Unknown provider selection')
     }

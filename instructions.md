@@ -20,7 +20,7 @@ Hermes Agent runs an LLM of your choosing that can execute commands on your beha
 1. Open Hermes' **Dashboard** tab. On a fresh install a critical task is waiting: **Configure Provider**. It's required before Hermes can run.
 2. Run **Configure Provider**. Pick your LLM backend:
    - **Ollama**, **vLLM**, or **llama.cpp** for local inference on your server (added as a dependency — install it from the Marketplace if you haven't).
-   - **OpenAI-Compatible**, **Google Gemini**, or **xAI Grok** for a cloud provider (supply the API key and model).
+   - **OpenAI-Compatible**, **Google Gemini**, **xAI Grok**, or **Anthropic Claude** for a cloud provider (supply the API key and model).
    - **OpenAI Codex OAuth** for ChatGPT/Codex access. The action returns a browser URL and device code instead of asking for raw tokens.
 3. If you chose **OpenAI Codex OAuth**, open the returned URL, enter the code, then run **Complete OpenAI Codex OAuth**.
 4. Open the **Web Dashboard** interface. Confirm the chat loads and that you can send a prompt. The **LLM Provider** health check turns green once a provider resolves.
