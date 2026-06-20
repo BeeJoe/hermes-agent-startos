@@ -17,7 +17,10 @@ export const completeCodexOAuth = sdk.Action.withoutInput(
     warning: null,
     allowedStatuses: 'any',
     group: null,
-    visibility: 'enabled',
+    // Surfaced only via the critical task Configure Provider creates when a
+    // codex login is pending (the documented require-setup idiom: a critical
+    // task can run a hidden action). Keeps it out of the always-on action list.
+    visibility: 'hidden',
   }),
 
   async ({ effects }) => {

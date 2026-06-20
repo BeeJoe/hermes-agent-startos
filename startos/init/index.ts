@@ -6,6 +6,7 @@ import { setInterfaces } from '../interfaces'
 import { sdk } from '../sdk'
 import { initializeService } from './initializeService'
 import { installTasks } from './installTasks'
+import { reconcileCodexTask } from './reconcileCodexTask'
 
 export const init = sdk.setupInit(
   restoreInit,
@@ -15,6 +16,7 @@ export const init = sdk.setupInit(
   actions,
   installTasks,
   initializeService,
+  reconcileCodexTask,
 )
 
 export const uninit = sdk.setupUninit(versionGraph)
