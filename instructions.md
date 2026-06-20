@@ -19,9 +19,11 @@ Hermes Agent runs an LLM of your choosing that can execute commands on your beha
 
 1. Open Hermes' **Dashboard** tab. On a fresh install a critical task is waiting: **Configure Provider**. It's required before Hermes can run.
 2. Run **Configure Provider**. Pick your LLM backend:
-   - **Ollama**, **vLLM**, or **llama.cpp** for local inference on your server (added as a dependency — install it from the Marketplace if you haven't).
-   - **OpenAI-Compatible**, **Google Gemini**, **xAI Grok**, or **Anthropic Claude** for a cloud provider (supply the API key and model).
-   - **OpenAI Codex OAuth** for ChatGPT/Codex access. The action returns a browser URL and device code instead of asking for raw tokens.
+   - **Ollama**, **vLLM**, or **llama.cpp** for local inference on your server (added as a dependency — install it from the Marketplace if you haven't); enter the model name your server serves.
+   - **Google Gemini**, **xAI Grok**, **Anthropic Claude**, or an **OpenAI-Compatible** endpoint for a cloud provider — supply the API key and pick a **default model** from the dropdown (or type one into the Custom Model field).
+   - **OpenAI Codex OAuth** for ChatGPT/Codex access — pick a default model; the action returns a browser URL and device code instead of asking for raw tokens.
+
+   The model you pick here is the **default**. You can switch models anytime from within Hermes chat with the `/model` command.
 3. If you chose **OpenAI Codex OAuth**, open the returned URL, enter the code, then run **Complete OpenAI Codex OAuth**.
 4. Open the **Web Dashboard** interface. Confirm the chat loads and that you can send a prompt. The **LLM Provider** health check turns green once a provider resolves.
 5. *(Optional)* Run **Login to StartOS** to authenticate the bundled `start-cli` so the agent can administer this server. It asks for your StartOS master password. **This grants the agent root-equivalent access — only do this on a machine you treat as expendable.**

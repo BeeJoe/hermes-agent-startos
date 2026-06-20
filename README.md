@@ -73,7 +73,7 @@ All containers share one subcontainer of the `main` volume. The runtime is compo
 
 1. Install raises a **root-equivalent capability** alert (see Limitations) — Hermes runs an LLM that can execute commands on your behalf.
 2. On first start, the **Configure Provider** action is a critical task: Hermes cannot run until an LLM backend resolves.
-3. Pick a backend in **Configure Provider** (a cloud OpenAI-compatible / Gemini / Grok / Anthropic provider, **OpenAI Codex OAuth**, or local **Ollama** / **vLLM** / **llama.cpp**). Selecting a local backend adds it as a running dependency and wires the backend URL (and key, where published) automatically. Selecting OpenAI Codex OAuth starts a browser device-code login and returns the URL/code.
+3. Pick a backend in **Configure Provider** (a cloud OpenAI-compatible / Gemini / Grok / Anthropic provider, **OpenAI Codex OAuth**, or local **Ollama** / **vLLM** / **llama.cpp**). Selecting a local backend adds it as a running dependency and wires the backend URL (and key, where published) automatically. Selecting OpenAI Codex OAuth starts a browser device-code login and returns the URL/code. For the named cloud providers the model field is a **default-model dropdown** (with a Custom field for ids not yet listed); the chosen model is the default and is changeable later from within Hermes via `/model`.
 4. For OpenAI Codex OAuth, open the returned URL, enter the code, then run **Complete OpenAI Codex OAuth** to exchange the browser approval for Hermes tokens.
 5. The **LLM Provider** health check turns green once a provider resolves; open the **Web Dashboard** to chat.
 6. *(Optional)* Run **Login to StartOS** to authenticate the bundled `start-cli` so the agent can administer this server.

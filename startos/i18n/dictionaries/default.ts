@@ -53,6 +53,10 @@ const dict = {
   'vLLM (local)': 49,
   'xAI Grok': 50,
   'llama.cpp (local)': 51,
+  'Default Model': 52,
+  'The model Hermes uses by default. Change it anytime from within Hermes chat with the /model command.': 53,
+  'Custom Model (optional)': 54,
+  'Use an exact model id that is not in the list above. Leave blank to use the dropdown selection.': 55,
 } as const
 
 /**

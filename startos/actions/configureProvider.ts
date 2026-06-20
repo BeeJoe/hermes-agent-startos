@@ -18,12 +18,87 @@ const LLAMA_CPP_BASE_URL = 'http://llama-cpp.startos:8080/v1'
 // xAI's API is OpenAI-compatible; routed as `custom` with this base URL.
 const GROK_BASE_URL = 'https://api.x.ai/v1'
 
-const modelField = Value.text({
-  name: i18n('Model'),
-  description: i18n('The model identifier to use (e.g. the served model name)'),
-  required: true,
-  default: null,
+// Curated model catalogs per named cloud provider (exact API model ids → label).
+// Configure Provider sets the *default* model; it can be changed anytime from
+// within Hermes chat via the /model command.
+const ANTHROPIC_MODELS = {
+  'claude-opus-4-8': 'Claude Opus 4.8 — most capable',
+  'claude-opus-4-7': 'Claude Opus 4.7',
+  'claude-sonnet-4-6': 'Claude Sonnet 4.6 — balanced',
+  'claude-haiku-4-5': 'Claude Haiku 4.5 — fast & cheap',
+  'claude-fable-5': 'Claude Fable 5 — premium',
+}
+const GEMINI_MODELS = {
+  'gemini-2.5-pro': 'Gemini 2.5 Pro',
+  'gemini-3.5-flash': 'Gemini 3.5 Flash — newest, strong for agentic',
+  'gemini-2.5-flash': 'Gemini 2.5 Flash — fast',
+  'gemini-2.5-flash-lite': 'Gemini 2.5 Flash-Lite — cheapest',
+}
+const GROK_MODELS = {
+  'grok-4.3': 'Grok 4.3 — flagship',
+  'grok-build-0.1': 'Grok Build 0.1 — agentic coding',
+  'grok-4.20-multi-agent-0309': 'Grok 4.20 Multi-Agent',
+}
+const CODEX_MODELS = {
+  'gpt-5.5': 'GPT-5.5 — strongest',
+  'gpt-5.4': 'GPT-5.4',
+  'gpt-5.4-mini': 'GPT-5.4 Mini — fast/cheap',
+}
+
+// Named-provider model picker: a dropdown of known ids plus an optional Custom
+// field, so a brand-new id can be entered without waiting for a package update.
+// Spread into a variant's spec; `pickModel` resolves the chosen value.
+const modelDropdown = <V extends Record<string, string>>(
+  values: V,
+  def: keyof V & string,
+) => ({
+  model: Value.select({
+    name: i18n('Default Model'),
+    description: i18n(
+      'The model Hermes uses by default. Change it anytime from within Hermes chat with the /model command.',
+    ),
+    default: def,
+    values,
+  }),
+  customModel: Value.text({
+    name: i18n('Custom Model (optional)'),
+    description: i18n(
+      'Use an exact model id that is not in the list above. Leave blank to use the dropdown selection.',
+    ),
+    required: false,
+    default: null,
+    placeholder: def,
+  }),
 })
+
+// Free-text model for backends whose served id the user determines (local
+// Ollama/vLLM/llama.cpp, or an arbitrary OpenAI-compatible endpoint).
+const servedModelField = (placeholder: string) =>
+  Value.text({
+    name: i18n('Default Model'),
+    description: i18n(
+      'The model Hermes uses by default. Change it anytime from within Hermes chat with the /model command.',
+    ),
+    required: true,
+    default: null,
+    placeholder,
+  })
+
+// Resolve the model from a dropdown+custom pair — a filled Custom field wins.
+const pickModel = (v: { model: string; customModel?: string | null }) =>
+  (v.customModel ?? '').trim() || v.model
+
+// Prefill helper for a dropdown+custom pair: select a known id, else route an
+// unknown (custom) id to the Custom field, leaving the dropdown at its default.
+const prefillModel = <V extends Record<string, string>>(
+  catalog: V,
+  id: string | undefined,
+): { model: keyof V & string } | { customModel: string } | {} =>
+  id == null
+    ? {}
+    : id in catalog
+      ? { model: id as keyof V & string }
+      : { customModel: id }
 
 const apiKeyField = (placeholder: string) =>
   Value.text({
@@ -49,39 +124,47 @@ const providerVariants = Variants.of({
         placeholder: 'https://api.openai.com/v1',
       }),
       apiKey: apiKeyField('sk-...'),
-      model: modelField,
+      model: servedModelField('gpt-4o'),
     }),
   },
   'openai-codex': {
     name: i18n('OpenAI Codex OAuth'),
-    spec: InputSpec.of({ model: modelField }),
+    spec: InputSpec.of({ ...modelDropdown(CODEX_MODELS, 'gpt-5.5') }),
   },
   gemini: {
     name: i18n('Google Gemini'),
-    spec: InputSpec.of({ apiKey: apiKeyField('...'), model: modelField }),
+    spec: InputSpec.of({
+      apiKey: apiKeyField('...'),
+      ...modelDropdown(GEMINI_MODELS, 'gemini-2.5-pro'),
+    }),
   },
   grok: {
     name: i18n('xAI Grok'),
-    spec: InputSpec.of({ apiKey: apiKeyField('xai-...'), model: modelField }),
+    spec: InputSpec.of({
+      apiKey: apiKeyField('xai-...'),
+      ...modelDropdown(GROK_MODELS, 'grok-4.3'),
+    }),
   },
   anthropic: {
     name: i18n('Anthropic Claude'),
     spec: InputSpec.of({
       apiKey: apiKeyField('sk-ant-...'),
-      model: modelField,
+      ...modelDropdown(ANTHROPIC_MODELS, 'claude-opus-4-8'),
     }),
   },
   ollama: {
     name: i18n('Ollama (local)'),
-    spec: InputSpec.of({ model: modelField }),
+    spec: InputSpec.of({ model: servedModelField('llama3.1:8b') }),
   },
   vllm: {
     name: i18n('vLLM (local)'),
-    spec: InputSpec.of({ model: modelField }),
+    spec: InputSpec.of({
+      model: servedModelField('Qwen/Qwen2.5-7B-Instruct'),
+    }),
   },
   'llama-cpp': {
     name: i18n('llama.cpp (local)'),
-    spec: InputSpec.of({ model: modelField }),
+    spec: InputSpec.of({ model: servedModelField('the model your server serves') }),
   },
 })
 
@@ -139,22 +222,28 @@ export const configureProvider = sdk.Action.withInput(
         return {
           provider: {
             selection: 'openai-codex' as const,
-            value: { model: modelId },
+            value: prefillModel(CODEX_MODELS, modelId),
           },
         }
       case 'grok':
         return {
-          provider: { selection: 'grok' as const, value: { model: modelId } },
+          provider: {
+            selection: 'grok' as const,
+            value: prefillModel(GROK_MODELS, modelId),
+          },
         }
       case 'gemini':
         return {
-          provider: { selection: 'gemini' as const, value: { model: modelId } },
+          provider: {
+            selection: 'gemini' as const,
+            value: prefillModel(GEMINI_MODELS, modelId),
+          },
         }
       case 'anthropic':
         return {
           provider: {
             selection: 'anthropic' as const,
-            value: { model: modelId },
+            value: prefillModel(ANTHROPIC_MODELS, modelId),
           },
         }
       case 'ollama':
@@ -241,12 +330,12 @@ export const configureProvider = sdk.Action.withInput(
       }
     } else if (p.selection === 'openai-codex') {
       backend = 'cloud'
-      codexOAuth = await requestCodexDeviceCode(p.value.model)
+      codexOAuth = await requestCodexDeviceCode(pickModel(p.value))
       model = {
         provider: 'openai-codex',
         base_url: undefined,
         api_key: undefined,
-        default: p.value.model,
+        default: pickModel(p.value),
       }
     } else if (p.selection === 'grok') {
       backend = 'cloud'
@@ -254,7 +343,7 @@ export const configureProvider = sdk.Action.withInput(
         provider: 'custom',
         base_url: GROK_BASE_URL,
         api_key: p.value.apiKey,
-        default: p.value.model,
+        default: pickModel(p.value),
       }
     } else if (p.selection === 'gemini') {
       backend = 'cloud'
@@ -262,7 +351,7 @@ export const configureProvider = sdk.Action.withInput(
         provider: 'gemini',
         base_url: undefined,
         api_key: undefined,
-        default: p.value.model,
+        default: pickModel(p.value),
       }
       envPatch.GEMINI_API_KEY = p.value.apiKey
     } else if (p.selection === 'anthropic') {
@@ -271,7 +360,7 @@ export const configureProvider = sdk.Action.withInput(
         provider: 'anthropic',
         base_url: undefined,
         api_key: undefined,
-        default: p.value.model,
+        default: pickModel(p.value),
       }
       envPatch.ANTHROPIC_API_KEY = p.value.apiKey
     } else {
