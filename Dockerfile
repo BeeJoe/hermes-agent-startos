@@ -41,6 +41,17 @@ COPY knowledge/bundle.json /opt/startos/knowledge/bundle.json
 RUN groupmod -o -g 1000 hermes 2>/dev/null || true && \
     usermod -u 1000 -g 1000 -d /opt/data -s /bin/bash hermes 2>/dev/null || true
 
+# Own the Hermes home scaffolding (hooks/, cron/, sessions/, …) as uid 1000.
+# ensure_hermes_home() runs on every `import hermes_cli` — including StartOS's
+# root-run health probes (the provider/gateway liveness checks) — and creates
+# those subdirs owned by the running uid (root, for the probes) unless these are
+# set, in which case it chowns each created dir to them (upstream #34107). Without
+# this the hermes-user gateway gets EACCES on $HOME/hooks on the FIRST boot and
+# crash-loops until a later boot's chown -R repairs it. Image-wide (not on the
+# StartOS daemon env) so the root probes inherit it too.
+ENV HERMES_UID=1000 \
+    HERMES_GID=1000
+
 # Dashboard (web UI / chat) and gateway API. StartOS binds the dashboard as the
 # `ui` interface; the gateway API stays internal.
 EXPOSE 9119
