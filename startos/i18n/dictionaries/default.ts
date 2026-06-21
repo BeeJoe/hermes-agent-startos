@@ -57,6 +57,11 @@ const dict = {
   'The model Hermes uses by default. Change it anytime from within Hermes chat with the /model command.': 53,
   'Custom Model (optional)': 54,
   'Use an exact model id that is not in the list above. Leave blank to use the dropdown selection.': 55,
+  'Revoke StartOS Access': 56,
+  "Remove Hermes' stored start-cli authentication so it can no longer administer this StartOS server": 57,
+  'Hermes will lose StartOS administrative access until you run Login to StartOS again.': 58,
+  'StartOS Access Revoked': 59,
+  "Hermes' stored start-cli authentication was removed. Run Login to StartOS to grant access again.": 60,
 } as const
 
 /**
