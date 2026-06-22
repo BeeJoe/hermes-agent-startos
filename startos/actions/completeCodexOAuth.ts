@@ -1,7 +1,6 @@
 import { authJson } from '../fileModels/authJson'
 import { configYaml } from '../fileModels/configYaml'
 import { storeJson } from '../fileModels/store.json'
-import { setDependencies } from '../dependencies'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 import { codexAuthPatch, completeCodexDeviceCode } from './codexOAuth'
@@ -48,11 +47,9 @@ export const completeCodexOAuth = sdk.Action.withoutInput(
       },
     })
     await storeJson.merge(effects, {
-      backend: 'cloud',
       provider: 'openai-codex',
       codexOAuth: undefined,
     })
-    await setDependencies(effects)
     await effects.restart()
 
     return {

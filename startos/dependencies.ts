@@ -1,40 +1,34 @@
 import { sdk } from './sdk'
-import { storeJson } from './fileModels/store.json'
+import { configYaml } from './fileModels/configYaml'
+
+// Map a config.yaml `model.provider` value to the StartOS package it needs.
+// Only the local runtimes require a dependency; cloud/custom providers need none.
+// (llama.cpp's provider id is `llamacpp`; its package id is `llama-cpp`.)
+const PROVIDER_TO_DEP: Record<string, { dep: string; versionRange: string }> = {
+  ollama: { dep: 'ollama', versionRange: '>=0.21.0:0' },
+  vllm: { dep: 'vllm', versionRange: '>=0.16.0:0.1' },
+  llamacpp: { dep: 'llama-cpp', versionRange: '>=1.0.9544:0' },
+}
 
 export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
-  const backend = await storeJson.read((s) => s.backend).once()
+  // Read Hermes' own config reactively so the dependency follows the live
+  // backend selection — whether it was set via Configure Provider or edited in
+  // the Hermes dashboard (two-way bound). No explicit re-trigger needed.
+  const provider = await configYaml
+    .read((c) => c.model?.provider)
+    .const(effects)
+  const match = provider ? PROVIDER_TO_DEP[provider] : undefined
 
-  if (backend === 'ollama') {
-    return {
-      ollama: {
-        kind: 'running',
-        versionRange: '>=0.21.0:0',
-        healthChecks: ['primary'],
-      },
+  const deps: Record<
+    string,
+    { kind: 'running'; versionRange: string; healthChecks: string[] }
+  > = {}
+  if (match) {
+    deps[match.dep] = {
+      kind: 'running',
+      versionRange: match.versionRange,
+      healthChecks: ['primary'],
     }
   }
-
-  if (backend === 'vllm') {
-    return {
-      vllm: {
-        kind: 'running',
-        versionRange: '>=0.16.0:0.1',
-        healthChecks: ['primary'],
-      },
-    }
-  }
-
-  if (backend === 'llama-cpp') {
-    return {
-      'llama-cpp': {
-        kind: 'running',
-        // Keyless release (the separate API key was dropped); Hermes connects
-        // to the internal endpoint without auth.
-        versionRange: '>=1.0.9544:0',
-        healthChecks: ['primary'],
-      },
-    }
-  }
-
-  return {}
+  return deps
 })

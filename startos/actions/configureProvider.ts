@@ -3,7 +3,6 @@ import { configYaml } from '../fileModels/configYaml'
 import { envFile } from '../fileModels/envFile'
 import { storeJson } from '../fileModels/store.json'
 import { readDependencyApiKey } from '../publicCredentials'
-import { setDependencies } from '../dependencies'
 import { i18n } from '../i18n'
 import { completeCodexOAuth } from './completeCodexOAuth'
 import { CODEX_DEVICE_URL, requestCodexDeviceCode } from './codexOAuth'
@@ -164,7 +163,9 @@ const providerVariants = Variants.of({
   },
   'llama-cpp': {
     name: i18n('llama.cpp (local)'),
-    spec: InputSpec.of({ model: servedModelField('the model your server serves') }),
+    spec: InputSpec.of({
+      model: servedModelField('the model your server serves'),
+    }),
   },
 })
 
@@ -282,14 +283,12 @@ export const configureProvider = sdk.Action.withInput(
       api_key: string | undefined
       default: string
     }
-    let backend: 'cloud' | 'ollama' | 'vllm' | 'llama-cpp'
     const envPatch: Record<string, string | undefined> = {}
     let codexOAuth:
       | Awaited<ReturnType<typeof requestCodexDeviceCode>>
       | undefined
 
     if (p.selection === 'ollama') {
-      backend = 'ollama'
       model = {
         provider: 'ollama',
         base_url: OLLAMA_BASE_URL,
@@ -297,7 +296,6 @@ export const configureProvider = sdk.Action.withInput(
         default: p.value.model,
       }
     } else if (p.selection === 'vllm') {
-      backend = 'vllm'
       const key = await readDependencyApiKey(effects, 'vllm')
       if (!key) {
         throw new Error(
@@ -313,7 +311,6 @@ export const configureProvider = sdk.Action.withInput(
     } else if (p.selection === 'llama-cpp') {
       // llama.cpp runs keyless; its basic auth is enforced only at the OS
       // reverse-proxy edge, so internal `.startos` connections need none.
-      backend = 'llama-cpp'
       model = {
         provider: 'llamacpp',
         base_url: LLAMA_CPP_BASE_URL,
@@ -321,7 +318,6 @@ export const configureProvider = sdk.Action.withInput(
         default: p.value.model,
       }
     } else if (p.selection === 'openai-compatible') {
-      backend = 'cloud'
       model = {
         provider: 'custom',
         base_url: p.value.baseUrl,
@@ -329,7 +325,6 @@ export const configureProvider = sdk.Action.withInput(
         default: p.value.model,
       }
     } else if (p.selection === 'openai-codex') {
-      backend = 'cloud'
       codexOAuth = await requestCodexDeviceCode(pickModel(p.value))
       model = {
         provider: 'openai-codex',
@@ -338,7 +333,6 @@ export const configureProvider = sdk.Action.withInput(
         default: pickModel(p.value),
       }
     } else if (p.selection === 'grok') {
-      backend = 'cloud'
       model = {
         provider: 'custom',
         base_url: GROK_BASE_URL,
@@ -346,7 +340,6 @@ export const configureProvider = sdk.Action.withInput(
         default: pickModel(p.value),
       }
     } else if (p.selection === 'gemini') {
-      backend = 'cloud'
       model = {
         provider: 'gemini',
         base_url: undefined,
@@ -355,7 +348,6 @@ export const configureProvider = sdk.Action.withInput(
       }
       envPatch.GEMINI_API_KEY = p.value.apiKey
     } else if (p.selection === 'anthropic') {
-      backend = 'cloud'
       model = {
         provider: 'anthropic',
         base_url: undefined,
@@ -370,12 +362,9 @@ export const configureProvider = sdk.Action.withInput(
     await configYaml.merge(effects, { model })
     if (Object.keys(envPatch).length > 0) await envFile.merge(effects, envPatch)
     await storeJson.merge(effects, {
-      backend,
       provider: p.selection,
       codexOAuth,
     })
-
-    await setDependencies(effects)
     if (codexOAuth) {
       await sdk.action.createOwnTask(effects, completeCodexOAuth, 'critical', {
         reason: i18n(

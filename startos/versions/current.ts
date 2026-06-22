@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2026.6.19:0',
+  version: '2026.6.19:1',
   releaseNotes: {
     en_US:
-      'Update the upstream Hermes Agent to v2026.6.19 (Hermes 0.17.0). The StartOS provider configuration, managed skills, and first-boot fixes are unchanged.',
+      'Packaging revision: the required local LLM dependency now tracks your live Hermes provider configuration (including changes made from the Hermes dashboard) instead of only the Configure Provider selection. Also adds Spanish, German, Polish, and French translations for the package listing, actions, configuration, and health checks.',
     es_ES:
-      'Actualiza el Hermes Agent upstream a v2026.6.19 (Hermes 0.17.0). La configuracion de proveedores de StartOS, las habilidades gestionadas y las correcciones del primer arranque no cambian.',
+      'Revisión de empaquetado: la dependencia de LLM local requerida ahora sigue la configuración de proveedor en vivo de Hermes (incluidos los cambios hechos desde el panel de Hermes) en lugar de solo la selección de Configurar proveedor. También añade traducciones al español, alemán, polaco y francés de la ficha del paquete, las acciones, la configuración y las comprobaciones de estado.',
     de_DE:
-      'Aktualisiert den Upstream-Hermes-Agent auf v2026.6.19 (Hermes 0.17.0). Die StartOS-Provider-Konfiguration, die verwalteten Skills und die Erststart-Korrekturen bleiben unveraendert.',
+      'Packaging-Revision: Die erforderliche lokale LLM-Abhängigkeit folgt jetzt Ihrer aktiven Hermes-Anbieterkonfiguration (einschließlich im Hermes-Dashboard vorgenommener Änderungen) statt nur der Auswahl unter „Anbieter konfigurieren“. Fügt außerdem spanische, deutsche, polnische und französische Übersetzungen für den Paketeintrag, die Aktionen, die Konfiguration und die Zustandsprüfungen hinzu.',
     pl_PL:
-      'Aktualizuje upstreamowego Hermes Agenta do v2026.6.19 (Hermes 0.17.0). Konfiguracja dostawcow StartOS, zarzadzane umiejetnosci i poprawki pierwszego uruchomienia pozostaja bez zmian.',
+      'Rewizja pakowania: wymagana lokalna zależność LLM śledzi teraz aktywną konfigurację dostawcy Hermes (w tym zmiany wprowadzone z panelu Hermes), a nie tylko wybór w akcji Konfiguruj dostawcę. Dodaje również tłumaczenia hiszpańskie, niemieckie, polskie i francuskie wpisu pakietu, akcji, konfiguracji i kontroli stanu.',
     fr_FR:
-      'Met a jour le Hermes Agent upstream vers v2026.6.19 (Hermes 0.17.0). La configuration des fournisseurs StartOS, les competences gerees et les corrections du premier demarrage restent inchangees.',
+      'Révision de packaging : la dépendance LLM locale requise suit désormais votre configuration de fournisseur Hermes en direct (y compris les changements effectués depuis le tableau de bord Hermes) au lieu de seulement la sélection de Configurer le fournisseur. Ajoute également des traductions en espagnol, allemand, polonais et français pour la fiche du paquet, les actions, la configuration et les contrôles de santé.',
   },
   migrations: {
     up: async ({ effects }) => {},

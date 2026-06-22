@@ -2,13 +2,13 @@ import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 
 /**
- * Package-owned state (not Hermes config). Tracks which LLM backend the user
- * picked in Configure Provider, so dependencies.ts knows whether to require
- * ollama / vllm. Kept separate from config.yaml to avoid polluting Hermes' own
- * file.
+ * Package-owned state (not Hermes config): the last Configure Provider
+ * selection (for form pre-fill) and any pending OpenAI Codex device-code login.
+ * The active backend is NOT tracked here — dependencies.ts derives it reactively
+ * from config.yaml `model.provider`, so it follows the live config (including
+ * dashboard edits) rather than only this action's selection.
  */
 const shape = z.looseObject({
-  backend: z.enum(['cloud', 'ollama', 'vllm', 'llama-cpp']).catch('cloud'),
   // Last Configure Provider selection id, so the action can pre-fill its form.
   provider: z.string().optional(),
   codexOAuth: z
