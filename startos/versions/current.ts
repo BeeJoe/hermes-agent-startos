@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2026.6.19:2',
+  version: '2026.6.19:0',
   releaseNotes: {
     en_US:
-      "Adds a Revoke StartOS Access action that removes Hermes' stored start-cli authentication without uninstalling the service.",
+      'Initial StartOS release of Hermes Agent, wrapping upstream Hermes v2026.6.19 (0.17.0).',
     es_ES:
-      'Agrega una acción Revocar acceso a StartOS que elimina la autenticación start-cli almacenada de Hermes sin desinstalar el servicio.',
+      'Versión inicial de Hermes Agent para StartOS, basada en Hermes upstream v2026.6.19 (0.17.0).',
     de_DE:
-      'Fügt eine Aktion „StartOS-Zugriff widerrufen“ hinzu, die die gespeicherte start-cli-Authentifizierung von Hermes ohne Deinstallation des Dienstes entfernt.',
+      'Erste StartOS-Veröffentlichung von Hermes Agent, basierend auf Upstream-Hermes v2026.6.19 (0.17.0).',
     pl_PL:
-      'Dodaje akcję „Odwołaj dostęp do StartOS”, która usuwa zapisaną autoryzację start-cli Hermesa bez odinstalowywania usługi.',
+      'Pierwsze wydanie Hermes Agent dla StartOS, oparte na upstreamowym Hermes v2026.6.19 (0.17.0).',
     fr_FR:
-      "Ajoute une action « Révoquer l'accès à StartOS » qui supprime l'authentification start-cli stockée de Hermes sans désinstaller le service.",
+      'Première version de Hermes Agent pour StartOS, basée sur Hermes upstream v2026.6.19 (0.17.0).',
   },
   migrations: {
     up: async ({ effects }) => {},
