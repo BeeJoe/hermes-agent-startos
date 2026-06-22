@@ -26,7 +26,8 @@ Hermes Agent runs an LLM of your choosing that can execute commands on your beha
    The model you pick here is the **default**. You can switch models anytime from within Hermes chat with the `/model` command.
 3. If you chose **OpenAI Codex OAuth**, open the returned URL, enter the code, then run **Complete OpenAI Codex OAuth**.
 4. Open the **Web Dashboard** interface. Confirm the chat loads and that you can send a prompt. The **LLM Provider** health check turns green once a provider resolves.
-5. *(Optional)* Run **Login to StartOS** to authenticate the bundled `start-cli` so the agent can administer this server. It asks for your StartOS master password. **This grants the agent root-equivalent access — only do this on a machine you treat as expendable.**
+5. *(Optional)* Run **Login to StartOS** to authenticate the bundled `start-cli` so the agent can administer this server. It asks for your StartOS master password, uses it for that login action, and stores a `start-cli` auth cookie on Hermes' data volume. **This grants the agent root-equivalent access — only do this on a machine you treat as expendable.**
+6. Run **Revoke StartOS Access** if you later want to remove Hermes' stored `start-cli` authentication without uninstalling the service.
 
 ## Using Hermes
 
@@ -41,11 +42,12 @@ Connect Telegram, Discord, Signal, Slack, Matrix, and others from the dashboard'
 ### Server administration & support
 
 - After *Login to StartOS*, the agent can use `start-cli` to read service status, manage packages, send notifications, and more.
+- *Revoke StartOS Access* removes Hermes' stored `start-cli` authentication. Run *Login to StartOS* again if you want to grant access back.
 - Ask the agent about StartOS, StartTunnel, or installed packages and it will answer from the bundled Start9 documentation knowledge bundle.
 
 ## Limitations
 
 - **Privacy.** With a cloud provider, every prompt and its context is sent to that provider. Treat anything you type as visible to them. Use Ollama, vLLM, or llama.cpp to keep inference on-device.
-- **Destructive capability.** After *Login to StartOS*, the agent can run commands that uninstall services, change configuration, or render the server unusable. There is no built-in confirmation step; if you want that guardrail, don't run *Login to StartOS*.
+- **Destructive capability.** After *Login to StartOS*, the agent can run commands that uninstall services, change configuration, or render the server unusable. There is no built-in confirmation step; if you want that guardrail, don't run *Login to StartOS*. If you already granted access, run *Revoke StartOS Access* to remove the stored `start-cli` authentication.
 - **Support docs scope.** The bundled knowledge covers StartOS, StartTunnel, and packages — not the s9pk Packaging book or Bitcoin Guides.
 - **MCP.** Live StartOS tools over the Model Context Protocol are planned for a future release; for now server administration is via the `start-cli` skill.
